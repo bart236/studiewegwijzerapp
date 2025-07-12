@@ -158,12 +158,19 @@
     <!-- Chatbot Knop & Venster -->
     <div id="chatbot-container" class="fixed bottom-6 right-6 flex flex-col items-end z-30">
         <div id="chatbot-window" class="w-96 h-[32rem] bg-white rounded-2xl shadow-2xl mb-4 flex-col transition-all origin-bottom-right scale-0 hidden">
-            <div class="p-4 bg-cyan-500 text-white rounded-t-2xl flex items-center space-x-3 flex-shrink-0">
-                <div class="text-3xl">🦉</div>
-                <div>
-                    <h4 class="font-bold text-lg">Wijze Uil</h4>
-                    <p class="text-sm opacity-80">Jouw hulp bij het leren</p>
+            <div class="p-4 bg-cyan-500 text-white rounded-t-2xl flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="text-3xl">🦉</div>
+                    <div>
+                        <h4 class="font-bold text-lg">Wijze Uil</h4>
+                        <p class="text-sm opacity-80">Jouw hulp bij het leren</p>
+                    </div>
                 </div>
+                <button id="chatbot-reset" title="Nieuw gesprek" class="p-2 rounded-full hover:bg-cyan-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M4 4l16 16" />
+                    </svg>
+                </button>
             </div>
             <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col">
                 <!-- Chat messages will be dynamically inserted here -->
@@ -438,17 +445,11 @@ document.addEventListener('DOMContentLoaded', () => {
             messages: document.getElementById('chat-messages'),
             input: document.getElementById('chat-input'),
             send: document.getElementById('chat-send'),
+            resetBtn: document.getElementById('chatbot-reset'),
             fileUpload: document.getElementById('file-upload-input'),
             inputArea: document.getElementById('chat-input-area'),
         },
         chatHistory: [],
-        step: 0,
-        planningData: {
-            vak: null,
-            leerdoelen: null,
-            dagen: null,
-            planning: null,
-        },
 
         init() {
             this.elements.toggle.addEventListener('click', () => this.toggleWindow());
@@ -457,6 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.key === 'Enter') this.handleUserInput();
             });
             this.elements.fileUpload.addEventListener('change', (e) => this.handleFileUpload(e));
+            this.elements.resetBtn.addEventListener('click', () => this.reset());
             this.reset();
         },
 
@@ -505,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userInput === '') return;
             this.addMessage(userInput, 'user');
             this.elements.input.value = '';
-            this.processConversation(userInput);
+            this.getGeminiResponse(userInput);
         },
         
         handleFileUpload(event) {
@@ -519,140 +521,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const reader = new FileReader();
             reader.onload = (e) => {
-                this.planningData.leerdoelen = e.target.result;
-                this.addMessage(`Top, ik heb je leerdoelen ontvangen! Hoeveel dagen heb je om dit te leren?`, 'bot');
-                this.step = 3; 
+                const fileContent = e.target.result;
+                this.addMessage(`Bestand "${file.name}" is geüpload.`, 'user');
+                this.getGeminiResponse(`Ik heb mijn leerdoelen geüpload. De inhoud is: "${fileContent}". Maak alsjeblieft een planning.`);
             };
             reader.readAsText(file);
         },
-
-        processConversation(input) {
-            this.elements.input.disabled = true;
-            setTimeout(() => {
-                switch (this.step) {
-                    case 0: 
-                        this.planningData.vak = input;
-                        this.addMessage(`Oké, voor ${this.planningData.vak}! Heb je een document (.txt) met de leerdoelen? Antwoord met 'ja' of 'nee'.`, 'bot');
-                        this.step = 1;
-                        break;
-                    case 1: 
-                        if (input.toLowerCase().includes('ja')) {
-                            this.addMessage("Super! Klik op de knop hieronder om je .txt-bestand te uploaden. \n\n(Tip: als je een Word- of PDF-bestand hebt, kopieer de tekst en plak deze in een nieuw .txt-bestand)", 'bot');
-                            const uploadButton = document.createElement('button');
-                            uploadButton.textContent = 'Kies .txt bestand';
-                            uploadButton.className = 'bg-amber-500 text-white font-bold py-2 px-4 rounded-lg my-2 mx-auto block';
-                            uploadButton.onclick = () => this.elements.fileUpload.click();
-                            this.elements.messages.appendChild(uploadButton);
-                            this.step = 2; 
-                        } else {
-                            this.addMessage("Geen probleem! Wat moet je precies leren? (bijv. 'hoofdstuk 1 t/m 3' of 'de Franse woordjes van lijst 4')", 'bot');
-                            this.step = 2;
-                        }
-                        break;
-                    case 2: 
-                        if (!this.planningData.leerdoelen) { 
-                             this.planningData.leerdoelen = input; 
-                        }
-                        this.addMessage("Duidelijk! Hoeveel dagen heb je om dit te leren?", 'bot');
-                        this.step = 3;
-                        break;
-                    case 3: 
-                        this.planningData.dagen = input;
-                        this.addMessage("Oké, ik maak een planning voor je!", 'bot');
-                        this.generatePlan();
-                        break;
-                    case 4: 
-                        if (input.toLowerCase().includes('ja')) {
-                            this.addMessage("Top! Ik maak een paar checkvragen voor je.", 'bot');
-                            this.generateCheckQuestions();
-                        } else {
-                            this.addMessage("Oké, geen probleem! Veel succes met leren. Als je nog iets nodig hebt, vraag het gerust!", 'bot');
-                            this.step = 5;
-                        }
-                        break;
-                    default:
-                        this.getGeneralResponse(input);
-                        break;
-                }
-                this.elements.input.disabled = false;
-                this.elements.input.focus();
-            }, 500);
-        },
         
-        async generatePlan() {
-            const prompt = `Je bent de Wijze Uil, een vrolijke en behulpzame chatbot. Maak een KORT en DUIDELIJK dag-voor-dag schema voor een 12-jarige leerling.
-            - Vak: ${this.planningData.vak}
-            - Aantal dagen: ${this.planningData.dagen}
-            - Leerdoelen/Onderwerp: ${this.planningData.leerdoelen}
-            
-            Genereer een simpel schema in een lijstformaat. Elke dag moet beginnen met 'Dag X:'. Gebruik geen lange zinnen. Geef na het schema een korte, motiverende zin.`;
-            
-            const planningText = await this.callGeminiAPI(prompt);
-            this.planningData.planning = planningText; // Sla de planning op
-            
-            const formattedResponse = planningText.replace(/Dag \d+:/g, (match) => `<strong>${match}</strong>`).split('\n').join('<br>');
-            this.addMessage(`<div class="chat-bubble chat-bubble-bot">${formattedResponse}</div>`, 'bot', true);
-
-            if (this.planningData.leerdoelen && this.planningData.leerdoelen.length > 5) { // Only ask if goals were provided
-                setTimeout(() => {
-                    this.addMessage("Wil je dat ik per dag een paar korte checkvragen maak om je te helpen oefenen? (ja/nee)", 'bot');
-                    this.step = 4;
-                }, 1000);
-            } else {
-                this.step = 5; // Gesprek is klaar
-            }
-        },
-
-        async generateCheckQuestions() {
-            const prompt = `Je bent de Wijze Uil. Maak op basis van de volgende leerdoelen en de planning, voor ELKE dag 1 of 2 korte checkvragen. De vragen moeten passen bij de taak van die dag.
-            - Leerdoelen: ${this.planningData.leerdoelen}
-            - Planning: ${this.planningData.planning}
-            
-            Presenteer de vragen per dag. Begin elke sectie met 'Checkvragen Dag X:'.`;
-            
-            const questionsText = await this.callGeminiAPI(prompt);
-            const formattedResponse = questionsText.replace(/Checkvragen Dag \d+:/g, (match) => `<strong>${match}</strong>`).split('\n').join('<br>');
-            this.addMessage(`<div class="chat-bubble chat-bubble-bot">${formattedResponse}</div>`, 'bot', true);
-            this.step = 5; // Gesprek is klaar
-        },
-
-        async getGeneralResponse(prompt) {
-             const generalPrompt = `Je bent de Wijze Uil, een vrolijke en behulpzame chatbot voor de webapp StudieWegwijzer. Je doel is om brugklassers (12-13 jaar) te helpen. Je bent op de hoogte van alle leerstrategieën in de app. De strategieën zijn: ${JSON.stringify(appData.strategies)}. Wanneer een leerling vraagt hoe hij/zij voor een bepaald vak moet leren, geef dan een korte, samengevatte versie van de relevante tips en verwijs naar de app. Als er handige YouTube-kanalen zijn voor dat vak, noem deze dan ook. Beantwoord de volgende vraag kort, simpel en motiverend: "${prompt}"`;
-             const responseText = await this.callGeminiAPI(generalPrompt);
-             this.addMessage(responseText, 'bot');
-        },
-
-        async callGeminiAPI(prompt) {
+        async getGeminiResponse(prompt) {
             this.addTypingIndicator();
             this.elements.input.disabled = true;
 
-            const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            // This now calls the secure Netlify function
+            const apiUrl = '/.netlify/functions/ask-wise-owl';
             
             this.chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-            const payload = { contents: this.chatHistory };
-
+            
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ chatHistory: this.chatHistory })
                 });
 
-                if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.statusText}`);
+                }
 
                 const result = await response.json();
+                
                 let botResponse = "Sorry, ik kon geen antwoord bedenken. Probeer het anders te vragen.";
                 if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
                     botResponse = result.candidates[0].content.parts[0].text;
                 }
                 
                 this.chatHistory.push({ role: "model", parts: [{ text: botResponse }] });
-                return botResponse;
+                
+                const formattedResponse = botResponse.replace(/(Dag|Checkvragen Dag) \d+:/g, (match) => `<strong>${match}</strong>`).split('\n').join('<br>');
+                this.addMessage(`<div class="chat-bubble chat-bubble-bot">${formattedResponse}</div>`, 'bot', true);
+
+                if (botResponse.toLowerCase().includes("document met de leerdoelen")) {
+                    const uploadButton = document.createElement('button');
+                    uploadButton.textContent = 'Kies .txt bestand';
+                    uploadButton.className = 'bg-amber-500 text-white font-bold py-2 px-4 rounded-lg my-2 mx-auto block';
+                    uploadButton.onclick = () => this.elements.fileUpload.click();
+                    this.elements.messages.appendChild(uploadButton);
+                    this.scrollToBottom();
+                }
 
             } catch (error) {
-                console.error("Gemini API call failed:", error);
-                return "Oeps, er ging iets mis met de verbinding.";
+                console.error("API call failed:", error);
+                this.addMessage("Oeps, er ging iets mis met de verbinding. Probeer het later opnieuw.", 'bot');
             } finally {
                 this.removeTypingIndicator();
                 this.elements.input.disabled = false;
@@ -661,13 +580,14 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         reset() {
-            this.step = 0;
-            this.planningData = { vak: null, leerdoelen: null, dagen: null, planning: null };
             this.elements.messages.innerHTML = '';
             this.addMessage("Hoi! Ik ben de Wijze Uil 🦉. Ik kan je helpen met een planning, of je kunt me vragen stellen over leren. Waar kan ik je mee helpen?", 'bot');
             this.chatHistory = [{
                 role: "user",
-                parts: [{ text: "Je bent de Wijze Uil, een vrolijke en behulpzame chatbot voor de webapp StudieWegwijzer. Je doel is om brugklassers (12-13 jaar) te helpen met leren. Je bent op de hoogte van alle leerstrategieën in de app, inclusief de YouTube-links. De strategieën zijn: " + JSON.stringify(appData.strategies) + ". Wanneer een leerling vraagt hoe hij/zij voor een bepaald vak moet leren, geef dan een korte, samengevatte versie van de relevante tips en verwijs naar de app. Als er handige YouTube-kanalen zijn voor dat vak, noem deze dan ook. Houd je taalgebruik eenvoudig, positief en aanmoedigend." }]
+                parts: [{ text: "Je bent de Wijze Uil, een vrolijke en behulpzame chatbot voor de webapp StudieWegwijzer. Je doel is om brugklassers (12-13 jaar) te helpen met leren. Je bent op de hoogte van alle leerstrategieën in de app, inclusief de YouTube-links. De strategieën zijn: " + JSON.stringify(appData.strategies) + ". Je kunt planningen maken en vragen beantwoorden. Als je een planning maakt, vraag dan eerst naar het vak, dan of ze leerdoelen hebben (als tekst of bestand), en dan het aantal dagen. Als je de leerdoelen hebt, vraag dan na het geven van de planning of je ook checkvragen moet maken. Houd je taalgebruik eenvoudig, positief en aanmoedigend." }]
+            }, {
+                role: "model",
+                parts: [{ text: "Hoi! Ik ben de Wijze Uil 🦉. Waar kan ik je vandaag mee helpen?" }]
             }];
         }
     };
