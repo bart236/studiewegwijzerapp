@@ -100,6 +100,19 @@
             background-color: #0284c7; /* sky-600 */
         }
     </style>
+    
+    <!-- Google Analytics Script -->
+    <script>
+      // Functie om gebeurtenissen te meten (bijv. klikken op knoppen)
+      function trackEvent(eventName, eventParams) {
+        if (typeof gtag === 'function') {
+          gtag('event', eventName, eventParams);
+        } else {
+          console.log(`Analytics not available. Event: ${eventName}`, eventParams);
+        }
+      }
+    </script>
+    
 </head>
 <body class="bg-slate-50 text-slate-800">
 
@@ -285,7 +298,7 @@
             <img src="https://cdn.prod.website-files.com/651bf0dee4cd6972d132001b/651bf0dee4cd6972d13201f3_PCC-RGB-logo_Final.png" alt="PCC Logo" class="h-16 mx-auto">
             <p class="text-sm text-slate-500 mt-4">Gemaakt voor PCC Heiloo</p>
             <p class="text-xs text-slate-500 mt-1">Gemaakt door B. Vennik</p>
-            <p class="text-xs text-slate-500 mt-1">Versie 14.0.0 (Netlify Function Ready)</p>
+            <p class="text-xs text-slate-500 mt-1">Versie 14.1.0 (Analytics Ready)</p>
         </div>
     </footer>
 
@@ -532,6 +545,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (subjectLink) { 
             e.preventDefault(); 
             const subjectId = subjectLink.dataset.subjectId;
+            const subjectName = appData.subjects.find(s => s.id === subjectId)?.name || subjectId;
+            
+            // Track event for Google Analytics
+            trackEvent('select_content', {
+                content_type: 'button',
+                content_id: subjectId,
+                content_name: subjectName
+            });
+
             if (subjectId === 'homework-assistant') {
                 navigateTo('homework-view');
             } else if (subjectId === 'test-trainer') {
@@ -659,7 +681,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.input.disabled = true;
             this.elements.send.disabled = true;
 
-            // This now calls the Netlify Function proxy
             const apiUrl = `/.netlify/functions/gemini-proxy`;
             
             const payload = {
@@ -683,7 +704,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
                 let botResponse = result.text || "Sorry, ik stuitte op een probleem. Probeer het opnieuw.";
                 
-                // Update history for the next turn
                 this.chatHistory.push({ role: "user", parts: [{ text: promptText }] });
                 this.chatHistory.push({ role: "model", parts: [{ text: botResponse }] });
 
@@ -818,7 +838,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.input.disabled = true;
             this.elements.send.disabled = true;
 
-            // This now calls the Netlify Function proxy
             const apiUrl = `/.netlify/functions/gemini-proxy`;
             
             const payload = {
@@ -826,7 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 prompt: promptText,
                 image: fileType === 'image' ? fileData : null,
                 fileContent: fileType === 'text' ? fileData : null,
-                structured: true // Tell the proxy we want a structured JSON response
+                structured: true 
             };
 
             try {
@@ -995,7 +1014,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.addTypingIndicator();
             this.elements.input.disabled = true;
             
-            // This now calls the Netlify Function proxy
             const apiUrl = `/.netlify/functions/gemini-proxy`;
             
             const payload = {
