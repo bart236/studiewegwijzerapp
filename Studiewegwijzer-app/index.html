@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="nl" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudieWegwijzer</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        main {
+            flex-grow: 1;
+        }
+        .view {
+            display: none;
+        }
+        .view.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-bubble-bot {
+            background-color: #E0F2FE; /* light-blue-100 */
+            align-self: flex-start;
+        }
+        .chat-bubble-user {
+            background-color: #D1FAE5; /* light-green-100 */
+            align-self: flex-end;
+        }
+        .chat-bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .typing-indicator {
+            align-self: flex-start;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            margin: 0 2px;
+            background-color: #94A3B8; /* slate-400 */
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        .interactive-checklist-item {
+            cursor: pointer;
+        }
+        .interactive-checklist-item + label {
+            cursor: pointer;
+        }
+        .interactive-checklist-item:checked + label {
+            text-decoration: line-through;
+            color: #64748b; /* slate-500 */
+        }
+        .uploaded-image-preview {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 10px;
+            margin-top: 8px;
+            border: 2px solid #e2e8f0;
+        }
+        .download-button {
+            display: inline-block;
+            background-color: #0ea5e9; /* sky-500 */
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 5px;
+            margin-right: 10px;
+            transition: background-color 0.2s;
+        }
+        .download-button:hover {
+            background-color: #0284c7; /* sky-600 */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white shadow-sm sticky top-0 z-20">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" id="home-link" class="text-2xl font-black text-cyan-500">StudieWegwijzer</a>
+            <button id="favorites-link" class="flex items-center space-x-2 text-slate-600 hover:text-cyan-500 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <span class="font-bold hidden sm:inline">Mijn Favorieten</span>
+            </button>
+        </nav>
+    </header>
+
+    <main id="app-container" class="container mx-auto p-6">
+
+        <!-- View 1: Homepage (Vakkenoverzicht) -->
+        <section id="home-view" class="view active">
+            <h2 class="text-3xl font-bold mb-2">Hoi! 👋 Wat wil je doen?</h2>
+            <p class="text-slate-500 mb-8">Kies een assistent of een vak voor leertips.</p>
+            <div id="vakken-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- VakKaart componenten worden hier door JS ingevoegd -->
+            </div>
+        </section>
+
+        <!-- View 2: Strategieën-pagina per Vak -->
+        <section id="subject-view" class="view">
+            <button class="back-button mb-6 inline-flex items-center text-cyan-600 font-bold hover:underline">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                </svg>
+                Terug naar de startpagina
+            </button>
+            <h2 id="subject-title" class="text-4xl font-black mb-8"></h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-2xl font-bold mb-4">Algemene Strategieën</h3>
+                    <div id="general-strategies-list" class="space-y-3"></div>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold mb-4">Specifiek voor dit Vak</h3>
+                    <div id="specific-strategies-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 3: Detailpagina per Strategie -->
+        <section id="strategy-view" class="view">
+             <button class="back-button mb-6 inline-flex items-center text-cyan-600 font-bold hover:underline">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                </svg>
+                Terug naar strategieën
+            </button>
+            <div class="bg-white p-8 rounded-2xl shadow-lg">
+                <div class="flex justify-between items-start">
+                    <h2 id="strategy-title" class="text-4xl font-black mb-6 text-slate-800"></h2>
+                    <button id="strategy-favorite-button" class="text-slate-300 hover:text-rose-500 transition-colors p-2 -mr-2 -mt-2">
+                        <!-- Favoriet icoon wordt hier door JS ingevoegd -->
+                    </button>
+                </div>
+                <div id="strategy-content" class="prose prose-lg max-w-none prose-h3:font-bold prose-h3:text-xl prose-h3:mb-2 prose-ul:list-disc prose-ul:pl-6 prose-li:mb-1 prose-strong:text-slate-700">
+                    <!-- Inhoud wordt hier door JS ingevoegd -->
+                </div>
+            </div>
+        </section>
+
+        <!-- View 4: Mijn Favorieten -->
+        <section id="favorites-view" class="view">
+             <h2 class="text-3xl font-bold mb-8">Mijn Favoriete Strategieën ❤️</h2>
+             <div id="favorites-list" class="space-y-4">
+                <!-- Favorieten worden hier door JS ingevoegd -->
+             </div>
+        </section>
+        
+        <!-- View 5: Huiswerkassistent -->
+        <section id="homework-view" class="view">
+            <button class="back-button mb-6 inline-flex items-center text-cyan-600 font-bold hover:underline">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                </svg>
+                Terug naar de startpagina
+            </button>
+            <div class="bg-white rounded-2xl shadow-lg flex flex-col h-[75vh]">
+                <div class="p-4 bg-cyan-500 text-white rounded-t-2xl flex items-center space-x-3">
+                    <div class="text-3xl">🧑‍🏫</div>
+                    <div>
+                        <h4 class="font-bold text-lg">Huiswerkassistent</h4>
+                        <p class="text-sm opacity-80">Jouw hulp bij elke opgave</p>
+                    </div>
+                </div>
+                <div id="homework-chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col"></div>
+                <div class="p-4 border-t border-slate-200 flex-shrink-0">
+                    <div class="flex items-center space-x-2">
+                        <input type="file" id="homework-file-upload" class="hidden" accept="image/*" capture="environment">
+                        <button id="homework-upload-button" title="Upload een foto" class="p-3 text-slate-500 hover:text-cyan-600 transition-colors rounded-full hover:bg-slate-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                        </button>
+                        <input type="text" id="homework-chat-input" placeholder="Typ of plak je vraag..." class="flex-1 px-4 py-2 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                        <button id="homework-chat-send" class="bg-cyan-500 text-white rounded-full p-3 hover:bg-cyan-600 transition-colors flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 6: Toets-Trainer -->
+        <section id="test-trainer-view" class="view">
+            <button class="back-button mb-6 inline-flex items-center text-cyan-600 font-bold hover:underline">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                </svg>
+                Terug naar de startpagina
+            </button>
+            <div class="bg-white rounded-2xl shadow-lg flex flex-col h-[75vh]">
+                <div class="p-4 bg-amber-500 text-white rounded-t-2xl flex items-center space-x-3">
+                    <div class="text-3xl">🎯</div>
+                    <div>
+                        <h4 class="font-bold text-lg">Toets-Trainer</h4>
+                        <p class="text-sm opacity-80">Maak je eigen oefentoets</p>
+                    </div>
+                </div>
+                <div id="test-trainer-chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col"></div>
+                <div class="p-4 border-t border-slate-200 flex-shrink-0">
+                    <div class="flex items-center space-x-2">
+                        <input type="file" id="test-trainer-file-upload" class="hidden" accept="image/*,.txt">
+                        <button id="test-trainer-upload-button" title="Upload leerdoelen" class="p-3 text-slate-500 hover:text-amber-600 transition-colors rounded-full hover:bg-slate-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                        </button>
+                        <input type="text" id="test-trainer-chat-input" placeholder="Plak hier je leerdoelen..." class="flex-1 px-4 py-2 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-400">
+                        <button id="test-trainer-chat-send" class="bg-amber-500 text-white rounded-full p-3 hover:bg-amber-600 transition-colors flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 7: Planassistent -->
+        <section id="planning-view" class="view">
+            <button class="back-button mb-6 inline-flex items-center text-cyan-600 font-bold hover:underline">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                </svg>
+                Terug naar de startpagina
+            </button>
+            <div class="bg-white rounded-2xl shadow-lg flex flex-col h-[75vh]">
+                <div class="p-4 bg-rose-500 text-white rounded-t-2xl flex items-center space-x-3">
+                    <div class="text-3xl">🗓️</div>
+                    <div>
+                        <h4 class="font-bold text-lg">Planassistent</h4>
+                        <p class="text-sm opacity-80">Maak een stappenplan voor je toets</p>
+                    </div>
+                </div>
+                <div id="planning-chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col"></div>
+                <div class="p-4 border-t border-slate-200 flex-shrink-0">
+                    <div class="flex items-center space-x-2">
+                         <input type="file" id="planning-file-upload" class="hidden" accept=".txt">
+                        <button id="planning-upload-button" title="Upload leerdoelen (.txt)" class="p-3 text-slate-500 hover:text-rose-600 transition-colors rounded-full hover:bg-slate-100">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                        </button>
+                        <input type="text" id="planning-chat-input" placeholder="Voor welk vak wil je een plan maken?" class="flex-1 px-4 py-2 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-rose-400">
+                        <button id="planning-chat-send" class="bg-rose-500 text-white rounded-full p-3 hover:bg-rose-600 transition-colors flex-shrink-0">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="py-8 mt-12 border-t border-slate-200">
+        <div class="container mx-auto px-6 text-center">
+            <img src="https://cdn.prod.website-files.com/651bf0dee4cd6972d132001b/651bf0dee4cd6972d13201f3_PCC-RGB-logo_Final.png" alt="PCC Logo" class="h-16 mx-auto">
+            <p class="text-sm text-slate-500 mt-4">Gemaakt voor PCC Heiloo</p>
+            <p class="text-xs text-slate-500 mt-1">Gemaakt door B. Vennik</p>
+            <p class="text-xs text-slate-500 mt-1">Versie 14.0.0 (Netlify Function Ready)</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- DATA ---
+    const appData = {
+        subjects: [
+            { id: 'planning-assistant', name: 'Planassistent', icon: '🗓️' },
+            { id: 'test-trainer', name: 'Toets-Trainer', icon: '🎯' },
+            { id: 'homework-assistant', name: 'Huiswerkassistent', icon: '🧑‍🏫' },
+            { id: 'nederlands', name: 'Nederlands', icon: '🇳🇱' },
+            { id: 'engels', name: 'Engels', icon: '🇬🇧' },
+            { id: 'frans', name: 'Frans', icon: '🇫🇷' },
+            { id: 'duits', name: 'Duits', icon: '🇩🇪' },
+            { id: 'aardrijkskunde', name: 'Aardrijkskunde', icon: '🌍' },
+            { id: 'geschiedenis', name: 'Geschiedenis', icon: '📜' },
+            { id: 'biologie', name: 'Biologie', icon: '🧬' },
+            { id: 'wiskunde', name: 'Wiskunde', icon: '🧮' },
+            { id: 'nst', name: 'NST', icon: '🧪' },
+            { id: 'economie', name: 'Economie', icon: '📈' },
+        ],
+        strategies: [
+            // All strategy objects remain the same as in the original file
+            { id: 'pomodoro', type: 'general', title: 'Leren met de Pomodoro-techniek', content: '<h3>Wat is het?</h3><p class="mb-6">De Pomodoro-techniek helpt je geconcentreerd te werken in blokken van 25 minuten, met korte pauzes tussendoor. Dit verbetert je focus en voorkomt dat je moe wordt. Gebruik de timer hieronder om het zelf te proberen!</p><div class="mt-6 bg-slate-100 p-6 rounded-2xl text-center"><div id="pomodoro-timer" class="text-6xl font-black text-slate-800 tracking-tighter">25:00</div><p id="pomodoro-status" class="mt-2 font-bold text-cyan-600">Tijd om te leren!</p><div class="flex justify-center space-x-4 mt-6"><button id="pomodoro-start" class="px-6 py-2 bg-cyan-500 text-white font-bold rounded-full hover:bg-cyan-600 transition">Start</button><button id="pomodoro-pause" class="px-6 py-2 bg-amber-500 text-white font-bold rounded-full hover:bg-amber-600 transition">Pauze</button><button id="pomodoro-reset" class="px-6 py-2 bg-slate-500 text-white font-bold rounded-full hover:bg-slate-600 transition">Reset</button></div></div>' },
+            { id: 'actief-herhalen', type: 'general', title: 'Actief herhalen: de sleutel tot onthouden', content: '<h3>Waarom alleen lezen niet werkt?</h3><p class="mb-4">Je hersenen hebben herhaling nodig. Maar niet zomaar herhalen! Actief herhalen betekent dat je je brein dwingt om de informatie op te halen. Dat is veel effectiever dan het alleen maar opnieuw lezen.</p><h3 class="mt-6">Hoe doe je dat?</h3><ul><li><strong>Maak toetsvragen:</strong> Schrijf op post-its vragen over de stof. Antwoord op de achterkant. Maak een stapel met goede en foute antwoorden en blijf de foute oefenen.</li><li><strong>Leg het uit aan een 6-jarige:</strong> Als je de stof in simpele taal kunt uitleggen (aan je broertje, zusje of zelfs een denkbeeldig persoon), dan weet je zeker dat je het snapt.</li><li><strong>Maak een oefentoets:</strong> Dit is de beste manier om te checken of je alles kent en kunt toepassen.</li></ul>' },
+            { id: 'leerwerk-voorbereiden', type: 'general', title: 'Hoe bereid je je leerwerk voor?', content: '<h3 class="mt-6">Stap 1: Maak een complete lijst</h3><p>Schrijf alles op wat je moet leren voor een toets: welke hoofdstukken, paragrafen, aantekeningen, filmpjes, etc.</p><h3 class="mt-6">Stap 2: Bepaal wat belangrijk is</h3><p>Niet alles is even belangrijk. Vraag je docent wat de kern is, of kijk waar de meeste aantekeningen over gaan. Zet de belangrijkste onderdelen bovenaan je lijst.</p><h3 class="mt-6">Stap 3: Kleurcodeer wat je al kent</h3><ul><li><strong class="text-green-600">Groen:</strong> Dit ken/snap ik al goed.</li><li><strong class="text-orange-500">Oranje:</strong> Dit ken/snap ik redelijk.</li><li><strong class="text-red-600">Rood:</strong> Dit ken/snap ik nog niet goed.</li></ul><h3 class="mt-6">Stap 4: Bepaal de leervolgorde</h3><p>Begin altijd met de rode, belangrijke onderdelen. Werk daarna de rest van de lijst af. Zo besteed je de meeste tijd aan wat het moeilijkst is.</p>' },
+            { id: 'dag-van-de-toets', type: 'general', title: 'Tips voor de dag van de toets', content: '<h3>Vooraf: Herhaal & Relax</h3><p>Kijk nog één keer kort je samenvatting door. Probeer daarna te ontspannen. Zenuwen helpen niet!</p><h3 class="mt-6">Tijdens de toets</h3><ul><li><strong>Lees de vraag 3x:</strong> 1. Scannend aan het begin. 2. Grondig bij het beantwoorden. 3. Controlerend aan het eind.</li><li><strong>Markeer sleutelwoorden:</strong> Omcirkel woorden als "leg uit", "noem drie redenen", zodat je geen delen van de vraag mist.</li><li><strong>Sla moeilijke vragen over:</strong> Kom je er niet uit? Zet een uitroepteken in de kantlijn en ga verder. Kom er later op terug.</li><li><strong>Herhaal de vraag in je antwoord:</strong> Vraag: "Waarom zijn bananen krom?" Antwoord: "Bananen zijn krom, omdat..." Dit helpt je een volledig antwoord te geven.</li></ul>' },
+            { id: 'wiskunde-oefenen', type: 'wiskunde', title: 'Wiskunde is vooral: doen!', content: '<h3>Waarom oefenen zo belangrijk is?</h3><p class="mb-4">Bij wiskunde moet je brein nieuwe "paadjes" aanmaken. Dat gebeurt alleen door heel veel te oefenen. Denk niet te snel "ik kan het niet", maar "ik kan het NOG niet".</p><h3 class="mt-6">Hoe oefen je slim?</h3><ul><li><strong>Vraag je docent:</strong> Welke opgaven zijn het belangrijkst? Begin daarmee.</li><li><strong>Maak en kijk na:</strong> Maak een opgave ZONDER in je boek te kijken. Kijk hem daarna direct na.</li><li><strong>Vinkjes en kruisjes:</strong> Opgave goed? Zet een ✔️. Fout of had je hulp nodig? Zet een ❌.</li><li><strong>Herhaal de kruisjes:</strong> De opgaven met een kruisje maak je de volgende dag opnieuw, net zo lang tot je overal een vinkje hebt.</li><li><strong>Werk netjes:</strong> Werk stap voor stap en schrijf je berekeningen duidelijk op. Dit voorkomt slordigheidsfouten.</li></ul>' },
+            { id: 'formuleblad-maken', type: 'wiskunde', title: 'Maak een formuleblad', content: '<h3>Waarom een formuleblad?</h3><p class="mb-4">Veel formules? Een formuleblad geeft overzicht en rust. Per hoofdstuk verzamel je alle formules op één plek.</p><h3 class="mt-6">Hoe maak je er een?</h3><ul><li><strong>Verzamel:</strong> Loop het hoofdstuk door en schrijf alle formules op.</li><li><strong>Orden:</strong> Koppel de formules aan onderwerpen. Bijvoorbeeld, alle formules over oppervlakte bij elkaar.</li><li><strong>Maak het netjes:</strong> Typ het blad uit of schrijf het heel duidelijk. Gebruik eventueel kleurtjes.</li></ul><p class="mt-4">Door het maken van het blad ben je al aan het leren!</p>' },
+            { id: 'nst-oefenen', type: 'nst', title: 'NST is vooral: doen!', content: '<h3>Waarom oefenen zo belangrijk is?</h3><p class="mb-4">Bij exacte vakken zoals NST moet je brein nieuwe "paadjes" aanmaken. Dat gebeurt alleen door heel veel te oefenen. Denk niet te snel "ik kan het niet", maar "ik kan het NOG niet".</p><h3 class="mt-6">Hoe oefen je slim?</h3><ul><li><strong>Vraag je docent:</strong> Welke opgaven zijn het belangrijkst? Begin daarmee.</li><li><strong>Maak en kijk na:</strong> Maak een opgave ZONDER in je boek te kijken. Kijk hem daarna direct na.</li><li><strong>Vinkjes en kruisjes:</strong> Opgave goed? Zet een ✔️. Fout of had je hulp nodig? Zet een ❌.</li><li><strong>Herhaal de kruisjes:</strong> De opgaven met een kruisje maak je de volgende dag opnieuw, net zo lang tot je overal een vinkje hebt.</li><li><strong>Werk netjes:</strong> Werk stap voor stap en schrijf je berekeningen duidelijk op. Dit voorkomt slordigheidsfouten.</li></ul>' },
+            { id: 'nst-formuleblad-maken', type: 'nst', title: 'Maak een formuleblad', content: '<h3>Waarom een formuleblad?</h3><p class="mb-4">Veel formules? Een formuleblad geeft overzicht en rust. Per hoofdstuk verzamel je alle formules op één plek.</p><h3 class="mt-6">Hoe maak je er een?</h3><ul><li><strong>Verzamel:</strong> Loop het hoofdstuk door en schrijf alle formules op.</li><li><strong>Orden:</strong> Koppel de formules aan onderwerpen. Bijvoorbeeld, alle formules over zwaartekracht bij elkaar.</li><li><strong>Maak het netjes:</strong> Typ het blad uit of schrijf het heel duidelijk. Gebruik eventueel kleurtjes.</li></ul><p class="mt-4">Door het maken van het blad ben je al aan het leren!</p>' },
+            { id: 'vreemde-talen-leren', type: 'taal-algemeen', title: 'De 4 O\'s voor woordjes leren', content: '<h3>Wat moet je leren?</h3><p class="mb-4">Kijk goed wat er getoetst wordt. Alleen woordjes? Of ook grammatica en spelling? Zorg dat je alles oefent.</p><h3 class="mt-6">De 4 O\'s Methode</h3><p class="mb-4">Een handig stappenplan om woordjes te stampen:</p><ul><li><strong>Overkijken:</strong> Lees de woordenlijst rustig door om een eerste indruk te krijgen.</li><li><strong>Oplezen:</strong> Lees de woorden (Nederlands en de vreemde taal) hardop voor. Zo hoor je ook hoe het klinkt.</li><li><strong>Overschrijven:</strong> Schrijf de woordenlijsten over. Dit helpt enorm bij de spelling!</li><li><strong>Overhoren:</strong> Laat jezelf of iemand anders je overhoren. Gebruik online tools of flashcards.</li></ul>' },
+            { id: 'talen-online-oefenen', type: 'taal-algemeen', title: 'Gebruik online tools en flashcards', content: '<h3>Waarom online oefenen?</h3><p class="mb-4">Websites en apps kunnen het leren van woordjes en grammatica veel leuker en effectiever maken. Ze overhoren je en helpen je focussen op wat je nog moeilijk vindt.</p><h3 class="mt-6">Handige tools</h3><ul><li><strong>WRTS & StudyGo:</strong> Perfect voor het overhoren van je eigen woordenlijsten.</li><li><strong>Quizlet:</strong> Maak digitale flashcards met woorden en begrippen. De \'leren\'-modus is super handig!</li><li><strong>Flashcards (op papier):</strong> Schrijf het woord op de ene kant en de vertaling op de andere. Maak een stapel \\\'goed\\\' en \\\'fout\\\' om slim te herhalen.</li></ul>' },
+            { id: 'frans-uitlegfilmpjes', type: 'frans', title: 'Handige Uitlegfilmpjes', content: '<h3>Extra uitleg nodig?</h3><p>Soms is het fijn om de stof nog een keer door iemand anders uitgelegd te krijgen. Op YouTube staan super veel handige filmpjes!</p><h3 class="mt-6">Aanbevolen Kanalen</h3><ul><li><a href="https://www.youtube.com/@defransejuf" target="_blank" class="text-cyan-600 font-bold hover:underline">De Franse Juf</a></li><li><a href="https://www.youtube.com/results?search_query=patrick+schuitema+frans" target="_blank" class="text-cyan-600 font-bold hover:underline">Patrick Schuitema</a></li></ul>' },
+            { id: 'duits-uitlegfilmpjes', type: 'duits', title: 'Handige Uitlegfilmpjes', content: '<h3>Extra uitleg nodig?</h3><p>Soms is het fijn om de stof nog een keer door iemand anders uitgelegd te krijgen. Op YouTube staan super veel handige filmpjes!</p><h3 class="mt-6">Aanbevolen Kanalen</h3><ul><li><a href="https://www.youtube.com/@MevrouwDuits" target="_blank" class="text-cyan-600 font-bold hover:underline">Mevrouw Duits</a></li><li><a href="https://www.youtube.com/@Ringenaldus" target="_blank" class="text-cyan-600 font-bold hover:underline">Martin Ringenaldus</a></li></ul>' },
+            { id: 'engels-uitlegfilmpjes', type: 'engels', title: 'Handige Uitlegfilmpjes', content: '<h3>Extra uitleg nodig?</h3><p>Soms is het fijn om de stof nog een keer door iemand anders uitgelegd te krijgen. Op YouTube staan super veel handige filmpjes!</p><h3 class="mt-6">Aanbevolen Kanalen</h3><ul><li><a href="https://www.youtube.com/@EngelsAcademie" target="_blank" class="text-cyan-600 font-bold hover:underline">EngelsAcademie</a></li></ul>' },
+            { id: 'leesvaardigheid-nederlands', type: 'nederlands', title: 'Stappenplan voor een leestoets', content: '<h3>Hoe pak je een leestoets aan?</h3><ol class="mb-4"><li><strong>Scannend lezen:</strong> Bekijk eerst de titel, tussenkopjes en plaatjes. Waar gaat de tekst over?</li><li><strong>Grondig lezen:</strong> Lees nu de hele tekst goed door. Markeer kernwoorden en signaalwoorden.</li><li><strong>Vragen lezen:</strong> Lees de vraag heel precies. Wat wordt er gevraagd? Omcirkel belangrijke woorden in de vraag.</li><li><strong>Antwoord formuleren:</strong> Gebruik de woorden uit de tekst in je antwoord, tenzij er staat dat je eigen woorden moet gebruiken. Herhaal de vraag in je antwoord voor een volledige zin.</li></ol><h3 class="mt-6">Belangrijke termen</h3><ul><li><strong>Citeren:</strong> Letterlijk overnemen. Gebruik aanhalingstekens.</li><li><strong>Zinsdeel:</strong> Een deel van een zin, niet de hele zin.</li><li><strong>Eigen woorden:</strong> Niet citeren, maar de informatie zelf opschrijven.</li></ul>' },
+            { id: 'geschiedenis-leren', type: 'geschiedenis', title: 'Leren voor Geschiedenis', content: '<h3>Begrijp het verhaal</h3><p class="mb-4">Geschiedenis is een verhaal. Probeer de grote lijn en de verbanden tussen gebeurtenissen te snappen. De leerdoelen aan het begin van een paragraaf helpen je hierbij.</p><h3 class="mt-6">Tips</h3><ul><li><strong>Leer de begrippen:</strong> De dikgedrukte woorden zijn de sleutel. Zorg dat je weet wat ze betekenen.</li><li><strong>Gebruik de samenvatting:</strong> Aan het eind van elke paragraaf staat een samenvatting. Dit is de kern van de stof!</li><li><strong>Maak een tijdlijn:</strong> Zet de belangrijkste gebeurtenissen en jaartallen op een rij. Dit geeft overzicht.</li></ul>' },
+            { id: 'geschiedenis-uitlegfilmpjes', type: 'geschiedenis', title: 'Handige Uitlegfilmpjes', content: '<h3>Extra uitleg nodig?</h3><p>Soms is het fijn om de stof nog een keer door iemand anders uitgelegd te krijgen. Op YouTube staan super veel handige filmpjes!</p><h3 class="mt-6">Aanbevolen Kanalen</h3><ul><li><a href="https://www.youtube.com/@JORTgeschiedenis" target="_blank" class="text-cyan-600 font-bold hover:underline">JORTgeschiedenis</a></li><li><a href="https://www.schooltv.nl/programma/histoclips/" target="_blank" class="text-cyan-600 font-bold hover:underline">Histoclips (via SchoolTV)</a></li></ul>' },
+            { id: 'aardrijkskunde-leren', type: 'aardrijkskunde', title: 'Leren voor Aardrijkskunde', content: '<h3>Hoofdzaken en bijzaken</h3><p class="mb-4">Probeer de belangrijkste informatie (hoofdzaken) te onderscheiden van voorbeelden (bijzaken).</p><h3 class="mt-6">Tips</h3><ul><li><strong>Leer de begrippen:</strong> De blauwe of dikgedrukte woorden zijn het belangrijkst. Maak hier een lijst van.</li><li><strong>Begrijp kaarten en figuren:</strong> Zorg dat je de kaarten, grafieken en plaatjes in je boek snapt. Ze geven vaak de kern van de informatie weer.</li><li><strong>Beantwoord de leerdoelen:</strong> Maak van de leerdoelen aan het begin van de paragraaf vragen, en probeer die te beantwoorden.</li><li><strong>Maak een mindmap:</strong> Verbind de begrippen met elkaar in een mindmap om de verbanden te zien.</li></ul>' },
+            { id: 'aardrijkskunde-uitlegfilmpjes', type: 'aardrijkskunde', title: 'Handige Uitlegfilmpjes', content: '<h3>Extra uitleg nodig?</h3><p>Soms is het fijn om de stof nog een keer door iemand anders uitgelegd te krijgen. Op YouTube staan super veel handige filmpjes!</p><h3 class="mt-6">Aanbevolen Kanalen</h3><ul><li><a href="https://www.youtube.com/results?search_query=aardrijkskunde+kennisclips" target="_blank" class="text-cyan-600 font-bold hover:underline">Aardrijkskunde kennisclips</a></li><li><a href="https://www.youtube.com/results?search_query=aardrijkskunde+bijles" target="_blank" class="text-cyan-600 font-bold hover:underline">Aardrijkskunde bijles</a></li></ul>' },
+            { id: 'biologie-leren', type: 'biologie', title: 'Leren voor Biologie', content: '<h3>Relaties en processen</h3><p class="mb-4">Bij biologie gaat het om het begrijpen van processen en hoe dingen met elkaar te maken hebben.</p><h3 class="mt-6">Tips</h3><ul><li><strong>Leer de begrippen:</strong> De dikgedrukte woorden zijn de basis. Zorg dat je ze kunt uitleggen.</li><li><strong>Bestudeer de afbeeldingen:</strong> Plaatjes van cellen, organen of processen zijn superbelangrijk. Leer de namen van de onderdelen en hun functie.</li><li><strong>Maak een samenvatting:</strong> Schrijf per basisstof in je eigen woorden op wat het belangrijkste is.</li></ul>' },
+            { id: 'biologie-uitlegfilmpjes', type: 'biologie', title: 'Handige Uitlegfilmpjes', content: '<h3>Extra uitleg nodig?</h3><p>Soms is het fijn om de stof nog een keer door iemand anders uitgelegd te krijgen. Op YouTube staan super veel handige filmpjes!</p><h3 class="mt-6">Aanbevolen Kanalen</h3><ul><li><a href="https://www.youtube.com/@BiologiemetJoost" target="_blank" class="text-cyan-600 font-bold hover:underline">Biologie met Joost</a></li><li><a href="https://www.youtube.com/@NGBiologie" target="_blank" class="text-cyan-600 font-bold hover:underline">NGBiologie</a></li></ul>' },
+            { id: 'economie-leren', type: 'economie', title: 'Leren voor Economie', content: '<h3>Rekenen en begrippen</h3><p class="mb-4">Economie is een combinatie van het begrijpen van begrippen en het kunnen toepassen van rekenformules.</p><h3 class="mt-6">Tips</h3><ul><li><strong>Leer de begrippen:</strong> De begrippen in de kantlijn zijn de basis. Zorg dat je ze kent.</li><li><strong>Oefen met rekenen:</strong> De formules moet je veel oefenen. Maak de rekenopgaven uit het boek meerdere keren.</li><li><strong>Maak de oefentoets:</strong> Aan het eind van elk hoofdstuk staat een oefentoets. Maak deze om te checken of je alles snapt.</li><li><strong>Bekijk de presentaties:</strong> Kijk de PowerPoints van je docent nog eens rustig door.</li></ul>' },
+            { id: 'economie-uitlegfilmpjes', type: 'economie', title: 'Handige Uitlegfilmpjes', content: '<h3>Extra uitleg nodig?</h3><p>Soms is het fijn om de stof nog een keer door iemand anders uitgelegd te krijgen. Op YouTube staan super veel handige filmpjes!</p><h3 class="mt-6">Aanbevolen Kanalen</h3><ul><li><a href="https://www.youtube.com/@economiemetjos" target="_blank" class="text-cyan-600 font-bold hover:underline">Economie met Jos</a></li><li><a href="https://www.youtube.com/@MeesterPatrick" target="_blank" class="text-cyan-600 font-bold hover:underline">Meester Patrick</a></li></ul>' },
+             { id: 'nederlands-uitlegfilmpjes', type: 'nederlands', title: 'Handige Uitlegfilmpjes', content: '<h3>Extra uitleg nodig?</h3><p>Soms is het fijn om de stof nog een keer door iemand anders uitgelegd te krijgen. Op YouTube staan super veel handige filmpjes!</p><h3 class="mt-6">Aanbevolen Kanalen</h3><ul><li><a href="https://www.youtube.com/@ArnoudKuijpers" target="_blank" class="text-cyan-600 font-bold hover:underline">Arnoud Kuijpers</a></li></ul>' },
+             { id: 'wiskunde-uitlegfilmpjes', type: 'wiskunde', title: 'Handige Uitlegfilmpjes', content: '<h3>Extra uitleg nodig?</h3><p>Soms is het fijn om de stof nog een keer door iemand anders uitgelegd te krijgen. Op YouTube staan super veel handige filmpjes!</p><h3 class="mt-6">Aanbevolen Kanalen</h3><ul><li><a href="https://www.youtube.com/@MathwithMenno" target="_blank" class="text-cyan-600 font-bold hover:underline">Math with Menno</a></li></ul>' },
+             { id: 'nst-uitlegfilmpjes', type: 'nst', title: 'Handige Uitlegfilmpjes', content: '<h3>Extra uitleg nodig?</h3><p>Soms is het fijn om de stof nog een keer door iemand anders uitgelegd te krijgen. Op YouTube staan super veel handige filmpjes!</p><h3 class="mt-6">Aanbevolen Kanalen</h3><ul><li><a href="https://www.youtube.com/@MeneerWietsema" target="_blank" class="text-cyan-600 font-bold hover:underline">Meneer Wietsema Natuurkunde</a></li></ul>' },
+        ]
+    };
+
+    let state = { currentPage: 'home-view', currentSubject: null, currentStrategy: null, favorites: [] };
+    
+    const views = document.querySelectorAll('.view');
+    const appContainer = document.getElementById('app-container');
+    const homeLink = document.getElementById('home-link');
+    const favoritesLink = document.getElementById('favorites-link');
+
+    // --- POMODORO TIMER STATE ---
+    let pomodoro = {
+        interval: null,
+        timeLeft: 25 * 60,
+        isPaused: true,
+        mode: 'work', // 'work', 'shortBreak', 'longBreak'
+        sessions: 0,
+    };
+
+    const updateView = () => {
+        views.forEach(view => view.classList.toggle('active', view.id === state.currentPage));
+        window.scrollTo(0, 0);
+    };
+
+    const navigateTo = (page, subjectId = null, strategyId = null) => {
+        if (state.currentStrategy === 'pomodoro' && strategyId !== 'pomodoro') {
+            clearInterval(pomodoro.interval);
+        }
+
+        state.currentPage = page;
+        if(subjectId) state.currentSubject = subjectId;
+        if(strategyId) state.currentStrategy = strategyId;
+
+        if (page === 'home-view') { state.currentSubject = null; state.currentStrategy = null; renderHome(); }
+        if (page === 'subject-view') { state.currentStrategy = null; renderSubjectView(subjectId); }
+        if (page === 'strategy-view') renderStrategyView(strategyId);
+        if (page === 'favorites-view') renderFavoritesView();
+        if (page === 'homework-view') { homeworkAssistant.init(); }
+        if (page === 'test-trainer-view') { testTrainer.init(); }
+        if (page === 'planning-view') { planningAssistant.init(); }
+        
+        updateView();
+    };
+
+    const renderHome = () => {
+        const grid = document.getElementById('vakken-grid');
+        grid.innerHTML = appData.subjects.map(subject => `
+            <a href="#" data-subject-id="${subject.id}" class="subject-link bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col items-center justify-center text-center aspect-square">
+                <div class="text-5xl mb-3">${subject.icon}</div>
+                <h3 class="font-bold text-lg">${subject.name}</h3>
+            </a>
+        `).join('');
+    };
+    
+    const renderStrategyListItem = (strategy) => {
+        const isFav = state.favorites.includes(strategy.id);
+        return `
+            <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
+                <a href="#" data-strategy-id="${strategy.id}" class="strategy-link font-bold text-slate-700 hover:text-cyan-600 flex-1">${strategy.title}</a>
+                <button data-favorite-id="${strategy.id}" class="favorite-button p-2 text-2xl transition-transform hover:scale-125 ${isFav ? 'text-rose-500' : 'text-slate-300'}">♥</button>
+            </div>`;
+    };
+
+    const renderSubjectView = (subjectId) => {
+        const subject = appData.subjects.find(s => s.id === subjectId);
+        document.getElementById('subject-title').textContent = subject.name;
+        
+        const generalList = document.getElementById('general-strategies-list');
+        const specificList = document.getElementById('specific-strategies-list');
+        
+        generalList.innerHTML = appData.strategies.filter(s => s.type === 'general').map(renderStrategyListItem).join('');
+        
+        let subjectStrategies = appData.strategies.filter(s => s.type === subject.id);
+        if (['frans', 'engels', 'duits'].includes(subject.id)) {
+            subjectStrategies = subjectStrategies.concat(appData.strategies.filter(s => s.type === 'taal-algemeen'));
+        }
+
+        specificList.innerHTML = subjectStrategies.map(renderStrategyListItem).join('');
+            
+        if (specificList.innerHTML === '') specificList.innerHTML = '<p class="text-slate-500">Er zijn nog geen specifieke strategieën voor dit vak.</p>';
+    };
+    
+    const renderStrategyView = (strategyId) => {
+        const strategy = appData.strategies.find(s => s.id === strategyId);
+        document.getElementById('strategy-title').textContent = strategy.title;
+        document.getElementById('strategy-content').innerHTML = strategy.content;
+        
+        const favButton = document.getElementById('strategy-favorite-button');
+        favButton.dataset.favoriteId = strategy.id;
+        
+        const isFav = state.favorites.includes(strategy.id);
+        favButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" /></svg>`;
+        favButton.classList.toggle('text-rose-500', isFav);
+
+        if (strategyId === 'pomodoro') {
+            setupPomodoroListeners();
+        }
+    };
+    
+    const renderFavoritesView = () => {
+        const favList = document.getElementById('favorites-list');
+        const favoriteStrategies = appData.strategies.filter(s => state.favorites.includes(s.id));
+        
+        if (favoriteStrategies.length === 0) {
+            favList.innerHTML = '<div class="bg-white p-8 rounded-2xl text-center shadow-sm"><p class="text-slate-500">Je hebt nog geen favorieten opgeslagen!</p><p class="mt-2">Klik op het hartje (♥) bij een strategie om hem hier op te slaan.</p></div>';
+            return;
+        }
+        favList.innerHTML = favoriteStrategies.map(renderStrategyListItem).join('');
+    };
+    
+    const loadFavorites = () => {
+        const favs = localStorage.getItem('studiewegwijzer_favorites');
+        state.favorites = favs ? JSON.parse(favs) : [];
+    };
+
+    const saveFavorites = () => {
+        localStorage.setItem('studiewegwijzer_favorites', JSON.stringify(state.favorites));
+    };
+
+    const toggleFavorite = (strategyId) => {
+        const index = state.favorites.indexOf(strategyId);
+        if (index > -1) state.favorites.splice(index, 1);
+        else state.favorites.push(strategyId);
+        saveFavorites();
+        
+        if(state.currentPage === 'subject-view') renderSubjectView(state.currentSubject);
+        if(state.currentPage === 'strategy-view') renderStrategyView(state.currentStrategy);
+        if(state.currentPage === 'favorites-view') renderFavoritesView();
+    };
+
+    const updatePomodoroDisplay = () => {
+        const timerDisplay = document.getElementById('pomodoro-timer');
+        if (!timerDisplay) return;
+        const minutes = Math.floor(pomodoro.timeLeft / 60);
+        const seconds = pomodoro.timeLeft % 60;
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    const startPomodoro = () => {
+        if (pomodoro.isPaused) {
+            pomodoro.isPaused = false;
+            pomodoro.interval = setInterval(() => {
+                pomodoro.timeLeft--;
+                updatePomodoroDisplay();
+                if (pomodoro.timeLeft <= 0) {
+                    clearInterval(pomodoro.interval);
+                    switch (pomodoro.mode) {
+                        case 'work':
+                            pomodoro.sessions++;
+                            pomodoro.mode = (pomodoro.sessions % 4 === 0) ? 'longBreak' : 'shortBreak';
+                            pomodoro.timeLeft = (pomodoro.mode === 'longBreak') ? 15 * 60 : 5 * 60;
+                            document.getElementById('pomodoro-status').textContent = (pomodoro.mode === 'longBreak') ? "Tijd voor een lange pauze!" : "Tijd voor een korte pauze!";
+                            break;
+                        case 'shortBreak':
+                        case 'longBreak':
+                            pomodoro.mode = 'work';
+                            pomodoro.timeLeft = 25 * 60;
+                            document.getElementById('pomodoro-status').textContent = "Tijd om weer te leren!";
+                            break;
+                    }
+                    pomodoro.isPaused = true;
+                    updatePomodoroDisplay();
+                }
+            }, 1000);
+        }
+    };
+
+    const pausePomodoro = () => {
+        pomodoro.isPaused = true;
+        clearInterval(pomodoro.interval);
+    };
+
+    const resetPomodoro = () => {
+        pausePomodoro();
+        pomodoro.mode = 'work';
+        pomodoro.timeLeft = 25 * 60;
+        pomodoro.sessions = 0;
+        document.getElementById('pomodoro-status').textContent = "Tijd om te leren!";
+        updatePomodoroDisplay();
+    };
+
+    const setupPomodoroListeners = () => {
+        document.getElementById('pomodoro-start').addEventListener('click', startPomodoro);
+        document.getElementById('pomodoro-pause').addEventListener('click', pausePomodoro);
+        document.getElementById('pomodoro-reset').addEventListener('click', resetPomodoro);
+        updatePomodoroDisplay();
+    };
+
+    homeLink.addEventListener('click', (e) => { e.preventDefault(); navigateTo('home-view'); });
+    favoritesLink.addEventListener('click', (e) => { e.preventDefault(); navigateTo('favorites-view'); });
+
+    appContainer.addEventListener('click', (e) => {
+        const subjectLink = e.target.closest('.subject-link');
+        if (subjectLink) { 
+            e.preventDefault(); 
+            const subjectId = subjectLink.dataset.subjectId;
+            if (subjectId === 'homework-assistant') {
+                navigateTo('homework-view');
+            } else if (subjectId === 'test-trainer') {
+                navigateTo('test-trainer-view');
+            } else if (subjectId === 'planning-assistant') {
+                navigateTo('planning-view');
+            } else {
+                navigateTo('subject-view', subjectId);
+            }
+        }
+        
+        const strategyLink = e.target.closest('.strategy-link');
+        if (strategyLink) { e.preventDefault(); navigateTo('strategy-view', state.currentSubject, strategyLink.dataset.strategyId); }
+
+        const backButton = e.target.closest('.back-button');
+        if (backButton) {
+            e.preventDefault();
+            if (state.currentPage === 'strategy-view') navigateTo('subject-view', state.currentSubject);
+            else if (['subject-view', 'homework-view', 'test-trainer-view', 'planning-view', 'favorites-view'].includes(state.currentPage)) {
+                navigateTo('home-view');
+            }
+        }
+        
+        const favoriteButton = e.target.closest('.favorite-button, #strategy-favorite-button');
+        if (favoriteButton) { e.preventDefault(); toggleFavorite(favoriteButton.dataset.favoriteId); }
+    });
+    
+    // --- HOMEWORK ASSISTANT ---
+    const homeworkAssistant = {
+        elements: {
+            messages: document.getElementById('homework-chat-messages'),
+            input: document.getElementById('homework-chat-input'),
+            send: document.getElementById('homework-chat-send'),
+            uploadBtn: document.getElementById('homework-upload-button'),
+            fileInput: document.getElementById('homework-file-upload'),
+        },
+        chatHistory: [],
+        currentImage: null, 
+        isInitialized: false,
+
+        init() {
+            if (this.isInitialized) return;
+            
+            this.elements.send.addEventListener('click', () => this.handleUserInput());
+            this.elements.input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.handleUserInput();
+            });
+            this.elements.uploadBtn.addEventListener('click', () => this.elements.fileInput.click());
+            this.elements.fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+            
+            this.reset();
+            this.isInitialized = true;
+        },
+
+        addMessage(content, sender, isHTML = false, imageUrl = null) {
+            const bubbleWrapper = document.createElement('div');
+            bubbleWrapper.className = `chat-bubble chat-bubble-${sender}`;
+
+            if (isHTML) {
+                bubbleWrapper.innerHTML = content;
+            } else {
+                bubbleWrapper.textContent = content;
+            }
+
+            if (imageUrl) {
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.className = 'uploaded-image-preview';
+                bubbleWrapper.appendChild(img);
+            }
+            
+            this.elements.messages.appendChild(bubbleWrapper);
+            this.scrollToBottom();
+        },
+
+        addTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            indicator.id = 'homework-typing-indicator';
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            this.elements.messages.appendChild(indicator);
+            this.scrollToBottom();
+        },
+
+        removeTypingIndicator() {
+            const indicator = document.getElementById('homework-typing-indicator');
+            if (indicator) indicator.remove();
+        },
+
+        scrollToBottom() {
+            this.elements.messages.scrollTop = this.elements.messages.scrollHeight;
+        },
+
+        handleUserInput() {
+            const userInput = this.elements.input.value.trim();
+            if (userInput === '' && !this.currentImage) return;
+
+            this.addMessage(userInput, 'user', false, this.currentImage);
+            
+            this.getGeminiResponse(userInput, this.currentImage);
+            
+            this.elements.input.value = '';
+            this.currentImage = null; 
+        },
+
+        handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file || !file.type.startsWith('image/')) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.currentImage = e.target.result;
+                this.addMessage("Afbeelding geselecteerd. Voeg je vraag toe en druk op verzenden.", 'bot');
+                const tempImg = document.createElement('img');
+                tempImg.src = this.currentImage;
+                tempImg.className = 'uploaded-image-preview'
+                this.elements.messages.lastChild.appendChild(tempImg);
+                this.scrollToBottom();
+            };
+            reader.readAsDataURL(file);
+        },
+        
+        async getGeminiResponse(promptText, base64ImageData) {
+            this.addTypingIndicator();
+            this.elements.input.disabled = true;
+            this.elements.send.disabled = true;
+
+            // This now calls the Netlify Function proxy
+            const apiUrl = `/.netlify/functions/gemini-proxy`;
+            
+            const payload = {
+                history: this.chatHistory,
+                prompt: promptText,
+                image: base64ImageData
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                    throw new Error(`API error: ${errorData.message}`);
+                }
+
+                const result = await response.json();
+                let botResponse = result.text || "Sorry, ik stuitte op een probleem. Probeer het opnieuw.";
+                
+                // Update history for the next turn
+                this.chatHistory.push({ role: "user", parts: [{ text: promptText }] });
+                this.chatHistory.push({ role: "model", parts: [{ text: botResponse }] });
+
+                this.addMessage(botResponse.replace(/\n/g, '<br>'), 'bot', true);
+
+            } catch (error) {
+                console.error("Homework assistant API call failed:", error);
+                this.addMessage(`Oeps, er ging iets mis. Details: ${error.message}`, 'bot');
+            } finally {
+                this.removeTypingIndicator();
+                this.elements.input.disabled = false;
+                this.elements.send.disabled = false;
+                this.elements.input.focus();
+            }
+        },
+        
+        reset() {
+            this.elements.messages.innerHTML = '';
+            this.addMessage("Hoi! Ik ben je Huiswerkassistent. Typ je vraag of upload een foto, dan help ik je op weg!", 'bot');
+            this.chatHistory = [{
+                role: "user",
+                parts: [{ text: "Je bent een Huiswerkassistent voor middelbare scholieren (onderbouw). Je bent een geduldige, vriendelijke en aanmoedigende coach. JE HOOFDDOEL IS OM NOOIT HET DIRECTE ANTWOORD TE GEVEN. In plaats daarvan help je de leerling zelf het antwoord te vinden. Gebruik de volgende methodes: 1. Stel wedervragen om het denkproces te starten ('Wat denk je dat de eerste stap is?'). 2. Breek het probleem op in kleine, behapbare stappen. 3. Geef een kleine hint voor de *volgende* stap als de leerling vastzit. 4. Vraag de leerling om uit te leggen wat ze al geprobeerd hebben. 5. Complimenteer de leerling voor hun inzet. BELANGRIJKE REGELS VOOR JE ANTWOORDEN: Houd je taalgebruik eenvoudig en positief. Houd je antwoorden kort en bondig (maximaal 3-4 zinnen). Gebruik witregels (paragrafen) om je antwoord overzichtelijk te maken." }]
+            }, {
+                role: "model",
+                parts: [{ text: "Oké, begrepen! Ik ben een coachende Huiswerkassistent. Ik zal leerlingen helpen zelf het antwoord te vinden zonder het voor te zeggen. Ik ben er klaar voor!" }]
+            }];
+        }
+    };
+
+    // --- TEST TRAINER ---
+    const testTrainer = {
+        elements: {
+            messages: document.getElementById('test-trainer-chat-messages'),
+            input: document.getElementById('test-trainer-chat-input'),
+            send: document.getElementById('test-trainer-chat-send'),
+            uploadBtn: document.getElementById('test-trainer-upload-button'),
+            fileInput: document.getElementById('test-trainer-file-upload'),
+        },
+        chatHistory: [],
+        currentFileData: null,
+        currentFileType: null, 
+        isInitialized: false,
+
+        init() {
+            if (this.isInitialized) return;
+            
+            this.elements.send.addEventListener('click', () => this.handleUserInput());
+            this.elements.input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.handleUserInput();
+            });
+            this.elements.uploadBtn.addEventListener('click', () => this.elements.fileInput.click());
+            this.elements.fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+            
+            this.reset();
+            this.isInitialized = true;
+        },
+
+        addMessage(content, sender, isHTML = false) {
+            const bubbleWrapper = document.createElement('div');
+            bubbleWrapper.className = `chat-bubble chat-bubble-${sender}`;
+            if (isHTML) {
+                bubbleWrapper.innerHTML = content;
+            } else {
+                bubbleWrapper.textContent = content;
+            }
+            this.elements.messages.appendChild(bubbleWrapper);
+            this.scrollToBottom();
+        },
+
+        addTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            indicator.id = 'test-trainer-typing-indicator';
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            this.elements.messages.appendChild(indicator);
+            this.scrollToBottom();
+        },
+
+        removeTypingIndicator() {
+            const indicator = document.getElementById('test-trainer-typing-indicator');
+            if (indicator) indicator.remove();
+        },
+
+        scrollToBottom() {
+            this.elements.messages.scrollTop = this.elements.messages.scrollHeight;
+        },
+
+        handleUserInput() {
+            const userInput = this.elements.input.value.trim();
+            if (userInput === '' && !this.currentFileData) return;
+
+            let message = "Ik heb de volgende leerdoelen";
+            if(userInput) {
+                message = `Ik heb de volgende leerdoelen: "${userInput}"`;
+            }
+            this.addMessage(message, 'user');
+            
+            this.getGeminiResponse(userInput, this.currentFileData, this.currentFileType);
+            
+            this.elements.input.value = '';
+            this.currentFileData = null;
+            this.currentFileType = null;
+        },
+
+        handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.currentFileData = e.target.result;
+                    this.currentFileType = 'image';
+                    this.addMessage("Afbeelding met leerdoelen geselecteerd. Druk op de genereer-knop om de toets te maken.", 'bot');
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type === 'text/plain') {
+                 const reader = new FileReader();
+                 reader.onload = (e) => {
+                    this.currentFileData = e.target.result;
+                    this.currentFileType = 'text';
+                    this.addMessage("Tekstbestand met leerdoelen geselecteerd. Druk op de genereer-knop om de toets te maken.", 'bot');
+                };
+                reader.readAsText(file);
+            } else {
+                this.addMessage("Sorry, ik kan alleen afbeeldingen (.jpg, .png) of tekstbestanden (.txt) lezen. Probeer de tekst uit Word/PDF te kopiëren en hier te plakken.", 'bot');
+            }
+        },
+        
+        async getGeminiResponse(promptText, fileData, fileType) {
+            this.addTypingIndicator();
+            this.elements.input.disabled = true;
+            this.elements.send.disabled = true;
+
+            // This now calls the Netlify Function proxy
+            const apiUrl = `/.netlify/functions/gemini-proxy`;
+            
+            const payload = {
+                history: this.chatHistory,
+                prompt: promptText,
+                image: fileType === 'image' ? fileData : null,
+                fileContent: fileType === 'text' ? fileData : null,
+                structured: true // Tell the proxy we want a structured JSON response
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                    throw new Error(`API error: ${errorData.message}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.text) {
+                    const parsedResult = JSON.parse(result.text);
+                    this.createDownloadLinks(parsedResult.vragen, parsedResult.antwoorden);
+                } else {
+                     throw new Error("Kon geen geldige toets genereren.");
+                }
+
+            } catch (error) {
+                console.error("Test trainer API call failed:", error);
+                this.addMessage(`Oeps, er ging iets mis bij het maken van de toets. Details: ${error.message}`, 'bot');
+            } finally {
+                this.removeTypingIndicator();
+                this.elements.input.disabled = false;
+                this.elements.send.disabled = false;
+                this.elements.input.focus();
+            }
+        },
+
+        createDownloadLinks(vragenText, antwoordenText) {
+            const vragenBlob = new Blob([vragenText], { type: 'text/plain;charset=utf-8' });
+            const antwoordenBlob = new Blob([antwoordenText], { type: 'text/plain;charset=utf-8' });
+
+            const vragenUrl = URL.createObjectURL(vragenBlob);
+            const antwoordenUrl = URL.createObjectURL(antwoordenBlob);
+
+            const downloadHtml = `
+                <p>Je oefentoets is klaar! Download de bestanden hieronder.</p>
+                <div class="mt-2">
+                    <a href="${vragenUrl}" download="oefentoets-vragen.txt" class="download-button">Download Toets</a>
+                    <a href="${antwoordenUrl}" download="oefentoets-antwoorden.txt" class="download-button">Download Antwoorden</a>
+                </div>
+            `;
+            this.addMessage(downloadHtml, 'bot', true);
+        },
+        
+        reset() {
+            this.elements.messages.innerHTML = '';
+            this.addMessage("Hoi! Ik ben de Toets-Trainer. Geef mij je leerdoelen (typ, plak of upload een bestand/foto), dan maak ik een oefentoets voor je.", 'bot');
+            this.chatHistory = [{
+                role: "user",
+                parts: [{ text: "Je bent een Toets-Trainer. Je genereert een oefentoets (vragen) en een bijbehorend antwoordmodel op basis van leerdoelen die een leerling (onderbouw middelbare school) je geeft. De output moet een JSON-object zijn met twee sleutels: 'vragen' en 'antwoorden'. De 'vragen'-tekst bevat alleen de genummerde vragen. De 'antwoorden'-tekst bevat de vragen met de bijbehorende antwoorden. Maak de vragen geschikt voor de onderbouw (denk aan open vragen, een paar meerkeuzevragen, etc.)." }]
+            }, {
+                role: "model",
+                parts: [{ text: "Begrepen. Ik zal een oefentoets en antwoordmodel genereren en deze aanleveren in het gevraagde JSON-formaat." }]
+            }];
+        }
+    };
+
+    // --- PLANNING ASSISTANT ---
+    const planningAssistant = {
+        elements: {
+            messages: document.getElementById('planning-chat-messages'),
+            input: document.getElementById('planning-chat-input'),
+            send: document.getElementById('planning-chat-send'),
+            uploadBtn: document.getElementById('planning-upload-button'),
+            fileInput: document.getElementById('planning-file-upload'),
+        },
+        chatHistory: [],
+        checklistState: {}, 
+        isInitialized: false,
+
+        init() {
+            if (this.isInitialized) return;
+            this.loadChecklistState(); 
+            this.elements.send.addEventListener('click', () => this.handleUserInput());
+            this.elements.input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.handleUserInput();
+            });
+            this.elements.uploadBtn.addEventListener('click', () => this.elements.fileInput.click());
+            this.elements.fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+            
+            this.elements.messages.addEventListener('change', (e) => {
+                if (e.target.matches('.interactive-checklist-item')) {
+                    this.handleChecklistChange(e.target);
+                }
+            });
+
+            this.reset();
+            this.isInitialized = true;
+        },
+
+        loadChecklistState() {
+            const savedState = localStorage.getItem('studiewegwijzer_planning_checklist');
+            this.checklistState = savedState ? JSON.parse(savedState) : {};
+        },
+
+        saveChecklistState() {
+            localStorage.setItem('studiewegwijzer_planning_checklist', JSON.stringify(this.checklistState));
+        },
+
+        handleChecklistChange(checkbox) {
+            this.checklistState[checkbox.id] = checkbox.checked;
+            this.saveChecklistState();
+        },
+        
+        addMessage(content, sender, isHTML = false) {
+            const bubble = document.createElement('div');
+            if (isHTML) {
+                bubble.innerHTML = content;
+            } else {
+                bubble.className = `chat-bubble chat-bubble-${sender}`;
+                bubble.textContent = content;
+            }
+            this.elements.messages.appendChild(bubble);
+            this.scrollToBottom();
+        },
+
+        addTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            indicator.id = 'planning-typing-indicator';
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            this.elements.messages.appendChild(indicator);
+            this.scrollToBottom();
+        },
+
+        removeTypingIndicator() {
+            const indicator = document.getElementById('planning-typing-indicator');
+            if (indicator) indicator.remove();
+        },
+
+        scrollToBottom() {
+            this.elements.messages.scrollTop = this.elements.messages.scrollHeight;
+        },
+
+        handleUserInput() {
+            const userInput = this.elements.input.value.trim();
+            if (userInput === '') return;
+            this.addMessage(userInput, 'user');
+            this.elements.input.value = '';
+            this.getGeminiResponse(userInput);
+        },
+        
+        handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file || file.type !== 'text/plain') {
+                this.addMessage("Sorry, ik kan alleen .txt-bestanden lezen.", 'bot');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const fileContent = e.target.result;
+                this.addMessage(`Bestand met leerdoelen is geüpload.`, 'user');
+                this.getGeminiResponse(`Maak een planning voor de volgende leerdoelen:\n${fileContent}`);
+            };
+            reader.readAsText(file);
+        },
+        
+        async getGeminiResponse(prompt) {
+            this.addTypingIndicator();
+            this.elements.input.disabled = true;
+            
+            // This now calls the Netlify Function proxy
+            const apiUrl = `/.netlify/functions/gemini-proxy`;
+            
+            const payload = {
+                history: this.chatHistory,
+                prompt: prompt,
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                    throw new Error(`API error: ${errorData.message}`);
+                }
+
+                const result = await response.json();
+                let botResponse = result.text || "Sorry, ik kon geen planning bedenken. Probeer het anders te vragen.";
+                
+                this.chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                this.chatHistory.push({ role: "model", parts: [{ text: botResponse }] });
+                
+                const isPlanning = botResponse.includes('- ');
+
+                if (isPlanning) {
+                    const planId = `plan-${Date.now()}`;
+                    const lines = botResponse.split('\n').filter(line => line.trim() !== '');
+                    const checklistHtml = lines.map((line, index) => {
+                        line = line.trim();
+                        if (line.startsWith('- ')) {
+                            const checkboxId = `${planId}-${index}`;
+                            const isChecked = this.checklistState[checkboxId] ? 'checked' : '';
+                            const labelText = line.substring(2);
+                            return `
+                                <div class="flex items-center my-2">
+                                    <input type="checkbox" id="${checkboxId}" class="interactive-checklist-item h-5 w-5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500" ${isChecked}>
+                                    <label for="${checkboxId}" class="ml-3 text-slate-700">${labelText}</label>
+                                </div>`;
+                        }
+                        return `<p class="font-bold text-slate-800 my-2">${line}</p>`;
+                    }).join('');
+                    this.addMessage(`<div class="chat-bubble chat-bubble-bot">${checklistHtml}</div>`, 'bot', true);
+                } else {
+                    this.addMessage(`<div class="chat-bubble chat-bubble-bot">${botResponse.replace(/\n/g, '<br>')}</div>`, 'bot', true);
+                }
+
+            } catch (error) {
+                console.error("Planning assistant API call failed:", error);
+                this.addMessage(`Oeps, er ging iets mis met de verbinding. Details: ${error.message}`, 'bot');
+            } finally {
+                this.removeTypingIndicator();
+                this.elements.input.disabled = false;
+                this.elements.input.focus();
+            }
+        },
+        
+        reset() {
+            this.elements.messages.innerHTML = '';
+            this.addMessage("Hoi! Ik ben de Planassistent. Vertel me voor welk vak je een planning nodig hebt, hoeveel dagen je hebt en wat de leerdoelen zijn. Dan maak ik een stappenplan voor je!", 'bot');
+            this.chatHistory = [{
+                role: "user",
+                parts: [{ text: "Je bent een Planassistent. Je helpt leerlingen met het maken van een concreet, dag-tot-dag stappenplan om te leren voor een toets. Vraag de leerling eerst voor welk vak de planning is, hoeveel dagen ze hebben om te leren, en wat de leerdoelen zijn (ze kunnen dit typen of een .txt-bestand uploaden). Geef als antwoord een duidelijk plan met taken per dag. BELANGRIJK: Formatteer je antwoord als een interactieve checklist. Begin elke taak op een nieuwe regel met een min-teken en een spatie (bijv. '- Dag 1: Lees hoofdstuk 1'). Gebruik geen nummering." }]
+            }, {
+                role: "model",
+                parts: [{ text: "Oké, begrepen. Ik ben de Planassistent en maak een dag-tot-dag planning in een checklist-formaat. Ik ben er klaar voor!" }]
+            }];
+        }
+    };
+
+    // --- INITIALIZATION ---
+    loadFavorites();
+    renderHome();
+    // Assistants are now initialized on-demand when their view is opened.
+
+});
+</script>
+
+</body>
+</html>
