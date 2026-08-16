@@ -18,7 +18,10 @@ exports.handler = async function(event, context) {
   }
   console.log("API Key found.");
 
-  const googleApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  // gemini-2.0-flash is op 01-06-2026 uitgezet. Model is instelbaar via de
+  // omgevingsvariabele GEMINI_MODEL; fallback is het actuele goedkope model.
+  const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+  const googleApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   try {
     const requestBody = JSON.parse(event.body);
